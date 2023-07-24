@@ -1,3 +1,28 @@
+# Good practice for custom chart makers
+
+## Database structure
+
+Use this url to avoid songid collisions with other chart makers
+[community spreadsheet](https://docs.google.com/spreadsheets/d/18qPEH5OZH67Blq6ySlHRnxxfmojFmgG7GQ80Wyd21zY/edit?usp=sharing)
+
+- do not use hiragana or kanji in the `fw_genre`/`fw_title`/`fw_artist` fields, they are used to sort the songlist. Only use full-width S-JIS characters.
+- use only lowercase filenames both inside your .ifs and for the .ifs themselves
+- it is not required to use lowercase filenames for the .xml files but it's better to do it
+- use a unique sd subfolder name (e.g. sd/custom_milo/) to avoid filename collision with other packs 
+
+## Folder structure 
+
+- the song pack should go in `data_mods`
+- you should have a unique folder name for your mod (e.g. `data_mods\crm_custom_2`)
+- database files must go in your mod folder root (e.g. `data_mods\crm_custom_2\custom_musicdb_crm2.xml`)
+- all sound data .ifs must go in the sd subfolder and within another unique folder name to avoid collision with other packs (e.g. `data_mods\crm_custom_2\sd\crm_custom\despacito.ifs`)
+- ha_merge.ifs, kc_diff.ifs and other files should follow the original data structure (e.g. `data_mods\crm_custom_2\tex\system\ha_merge_ifs\ha_despacito.ifs`.
+- Thanks to mon's LayeredFS, any file from the `data` folder can be modded this way
+- NOTE: do not pack an .ifs file unless it is meant to hide some files from the game. For example it is ok to have several mods with a `ha_merge_ifs` folder, but do not use a `ha_merge.ifs` file or it will entirely replace the original file rather than merging with it.
+
+- **IMPORTANT NOTE**: use only lowercase filenames both inside your .ifs and for the .ifs themselves. Failing to do so might crash the game.
+- Make sure your xml files are shift-jis encoded, else your songs won't appear ingame.
+
 # Omnimix databases documentation
 
 ## database load order
@@ -6,14 +31,14 @@ All database files that are to be loaded must reside in data_mods/your_mod_name/
 They will be loaded in alphabetical order so name them with respect to the order you want them to be loaded. Also be mindful of your own mod folder name.
 
 Example:
-
+```
 /data_mods
   /crm_custom_1
       /custom_musicdb_crm1.xml
       /custom_musicdb_zzz.xml
   /milo_custom_2
       /custom_musicdb_milo2.xml
-
+```
 custom_musicdb_crm1.xml and custom_musicdb_zzz.xml will be loaded first (in this order), because of the folder name.
 
 NOTE: popnhax will load all character data from all mod folders before loading any music data, regardless of the order.
@@ -228,26 +253,3 @@ These fields are used to sort, therefore DO NOT USE HIRAGANA OR KANJI else your 
 - `fontface` is undocumented but changing it changes the font used for the character's text.
 - `color` is the RGB values for the character's text. Example: `6204672` = `#5EAD00`.
 - `width`/`height` are self explanatory.
-
-## Custom pack folder structure 
-
-- the song pack should go in `data_mods`
-- you should have a unique folder name for your mod (e.g. `data_mods\crm_custom_2`)
-- database files must go in your mod folder root (e.g. `data_mods\crm_custom_2\custom_musicdb_crm2.xml`)
-- all sound data .ifs must go in the sd subfolder and within another unique folder name to avoid collision with other packs (e.g. `data_mods\crm_custom_2\sd\crm_custom\despacito.ifs`)
-- ha_merge.ifs, kc_diff.ifs and other files should follow the original data structure (e.g. `data_mods\crm_custom_2\tex\system\ha_merge_ifs\ha_despacito.ifs`.
-- Thanks to mon's LayeredFS, any file from the `data` folder can be modded this way
-- NOTE: do not pack an .ifs file unless it is meant to hide some files from the game. For example it is ok to have several mods with a `ha_merge_ifs` folder, but do not use a `ha_merge.ifs` file or it will entirely replace the original file rather than merging with it.
-
-- IMPORTANT NOTE: use only lowercase filenames both inside your .ifs and for the .ifs themselves. Failing to do so might crash the game.
-- Make sure your xml files are shift-jis encoded, else your songs won't appear ingame.
-
-## Good practice for custom chart makers
-
-Use this url to avoid songid collisions with other chart makers
-`https://docs.google.com/spreadsheets/d/18qPEH5OZH67Blq6ySlHRnxxfmojFmgG7GQ80Wyd21zY/edit?usp=sharing`
-
-- do not use hiragana or kanji in the `fw_genre`/`fw_title`/`fw_artist` fields, they are used to sort the songlist.
-- use only lowercase filenames both inside your .ifs and for the .ifs themselves
-- it is not required to use lowercase filenames for the .xml files but it's better to do it
-- use a unique sd subfolder name (e.g. sd/custom_milo/) to avoid filename collision with other packs 
