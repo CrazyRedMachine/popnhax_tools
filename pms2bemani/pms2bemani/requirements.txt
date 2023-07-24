@@ -1,0 +1,2 @@
+ifstools==1.13
+pydub==0.23.1
