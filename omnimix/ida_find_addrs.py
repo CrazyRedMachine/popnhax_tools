@@ -14,6 +14,10 @@ OFFSET_BLACKLIST = [
     0x100be154,
     0x100be346,
     0x100bed91,
+    0x100e56ec,
+    0x100e56f5,
+    0x100e5a55,
+    0x100e5a5e,
     0x100fa4e2,
 ]
 
@@ -80,8 +84,12 @@ def get_table_size_by_xref(ea, entry_size):
     return (ea - orig_ea) // entry_size
 
 
-def find_weird_update_patches():
-    ea = find_binary("83 C4 04 3B C5 74 09", 0, 0)
+def find_weird_update_patches(music_limit):
+    new = True if music_limit > 2040 else False
+    if new:
+        ea = find_binary("83 C4 04 89 44 24 14 C7", 0, 0)
+    else:
+      ea = find_binary("83 C4 04 3B C5 74 09", 0, 0)
     orig_ea = ea
 
     values = []
@@ -110,18 +118,26 @@ def find_weird_update_patches():
 
     ea = idc.FindFuncEnd(call_ea)
     lea_values = []
-    lea_orders = [11, 10, 9]
+    if new:
+        lea_orders = [11, 11, 10, 10, 9, 9]
+    else:
+        lea_orders = [11, 10, 9]
     while ea >= call_ea:
         if idc.GetMnem(ea) == "lea" and idc.GetOpnd(ea, 1).startswith('[ebx+'):
             lea_values.append([MUSIC_IDX, lea_orders[len(lea_values)], idc.GetOperandValue(ea, 1), ea])
 
         # It is probably possible to pull a lot more from here
-        if len(lea_values) == 3:
+        if new and len(lea_values) == 6:
+            break
+        elif not new and len(lea_values) == 3:
             break
 
         ea = idc.PrevHead(ea)
 
-    return lea_values[::-1] + values
+    if new:
+        return lea_values[-1::-2] + values
+    else:
+        return lea_values[::-1] + values
 
 
 # These all reference the first entry in their respective tables
@@ -179,7 +195,6 @@ update_patches = [
     [FLAVOR_IDX, 8, limit_info_list[FLAVOR_IDX][1] * 0x0c],
     [FLAVOR_IDX, 8, limit_info_list[FLAVOR_IDX][1] * 0x0c + 4],
 ]
-update_patches_weird = find_weird_update_patches()
 
 hook_addrs = [
     [0, find_binary("8B C6 E8 ?? ?? ?? ?? 83 F8 ?? 7D ?? 56 8A C3 E8 ?? ?? ?? ?? 83 C4 04 3D ?? ?? ?? ?? 7D ??", 0, 0)],
@@ -200,6 +215,8 @@ print("<patches>")
 print("\t<limits>")
 for limit_info in limit_info_list:
     patch_target, limit_value = limit_info
+    if TARGETS[patch_target] == "music":
+        music_limit = limit_value
     print('\t\t<%s __type="u32">%d</%s>' % (TARGETS[patch_target], limit_value, TARGETS[patch_target]))
 print("\t</limits>")
 
@@ -284,6 +301,7 @@ for patch_info in update_patches:
             print('\t\t<%s __type="str" method="%d" expected="0x%x">0x%x</%s>' % (TARGETS[patch_target], patch_type, search_value, ea + raw_bytes.index(raw_search_value), TARGETS[patch_target]))
             print ""
 
+update_patches_weird = find_weird_update_patches(music_limit)
 for patch_info in update_patches_weird:
     patch_target, patch_type, search_value, ea = patch_info
     raw_search_value = bytearray(struct.pack("<I", search_value))

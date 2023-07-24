@@ -2,8 +2,8 @@
 
 ## Database structure
 
-Use this url to avoid songid collisions with other chart makers
-[community spreadsheet](https://docs.google.com/spreadsheets/d/18qPEH5OZH67Blq6ySlHRnxxfmojFmgG7GQ80Wyd21zY/edit?usp=sharing)
+Check the [community spreadsheet](https://docs.google.com/spreadsheets/d/18qPEH5OZH67Blq6ySlHRnxxfmojFmgG7GQ80Wyd21zY/edit?usp=sharing)
+ and **reserve a songid range** to avoid songid collisions with other chart makers
 
 - do not use hiragana or kanji in the `fw_genre`/`fw_title`/`fw_artist` fields, they are used to sort the songlist. Only use full-width S-JIS characters.
 - use only lowercase filenames both inside your .ifs and for the .ifs themselves
