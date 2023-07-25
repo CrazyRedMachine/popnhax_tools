@@ -21,10 +21,10 @@ optional arguments:
   --input-hp INPUT_HP   Input file (HP)
   --input-op INPUT_OP   Input file (OP)
   --output OUTPUT       Output folder
-  --preview PREVIEW     Input preview file (optional, overrides preview generation code)
+  --preview PREVIEW     Input preview file (overrides preview generation code)
   --new                 New chart format which supports hold notes
-  --bg BG               Background image (optional, must be 128x256)
-  --hariai HARIAI       Hariai image (optional, must be 250x322 or 382x502)
+  --bg BG               Background image (must be 128x256)
+  --hariai HARIAI       Hariai image (must be 250x322 or 382x502)
   --metadata-fw-title METADATA_FW_TITLE
                         Fullwidth music title for database
   --metadata-fw-artist METADATA_FW_ARTIST
@@ -71,12 +71,11 @@ required arguments:
 ```
 
 - Use `--new` to specify the new chart format (Usaneko and later) which supports hold notes.
-- Use `--ifs` to generate an `.ifs` file instead of a folder.
 - If a preview sound file is not specified with --preview, a preview will be automatically generated.
     - Automatically generated previews default to 10 seconds at the mid point of the chart.
     - The preview offset and duration can be customized using `--preview-offset` and `--preview-duration` respectively.
 
-Example: `python3 pms2bemani.py --input-np wonderingbeats/01_kouunn-n.pms --input-hp wonderingbeats/02_kouunn-h.pms --input-op wonderingbeats/03_kouunn-ex.pms --keysounds-folder wonderingbeats --name wonderingbeats_convert --ifs --new --preview-offset 10.4 --preview-duration 15`
+Example: `python3 pms2bemani.py --input-np wonderingbeats/01_kouunn-n.pms --input-hp wonderingbeats/02_kouunn-h.pms --input-op wonderingbeats/03_kouunn-ex.pms --keysounds-folder wonderingbeats --name wonderingbeats_convert --new --preview-offset 10.4 --preview-duration 15`
 
 ## Credits
 - ifstools (https://github.com/mon/ifstools)
