@@ -5,7 +5,6 @@
 
 ## Usage
 ```
-warning: no background specified, will only work with usaneko and up
 usage: pms2bemani.py [-h] [--input-bp INPUT_BP] [--input-ep INPUT_EP] [--input-np INPUT_NP] [--input-hp INPUT_HP] [--input-op INPUT_OP] [--output OUTPUT] --name NAME
                      --musicid MUSICID --keysounds-folder KEYSOUNDS_FOLDER [--preview PREVIEW] [--new] --banner BANNER [--bg BG] [--hariai HARIAI]
                      [--metadata-fw-title METADATA_FW_TITLE] [--metadata-fw-artist METADATA_FW_ARTIST] [--metadata-fw-genre METADATA_FW_GENRE]
