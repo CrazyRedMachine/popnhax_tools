@@ -782,7 +782,7 @@ if __name__ == "__main__":
     parser.add_argument('--metadata-chara-x', help='Chara X entry for database', default=0, type=int)
     parser.add_argument('--metadata-chara-y', help='Chara Y entry for database', default=0, type=int)
     
-    print("warning: no background specified, will only work with usaneko and up")
+    
     if os.path.exists("bmx2wavc.exe"):
         parser.add_argument('--preview-offset', help='Offset from start in seconds (ex. 10.4 would be 10.4 seconds)', default=-1, type=float)
         parser.add_argument('--preview-duration', help='Length of preview in seconds', default=10, type=float)
@@ -790,6 +790,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     args_vars = vars(args)
 
+    if args.bg is None:
+        print("warning: no background specified, will only work with usaneko and up")
     if args.musicid < 4000:
         print("Music ID must be >= 4000")
         exit(1)
