@@ -692,8 +692,8 @@ def create_bg(output_path, musicid, bg_filename):
 def create_hariai(output_path, musicid, hariai_filename):
     hariai_image = Image.open(hariai_filename)
 
-    if hariai_image.size != (248, 320):
-        print("hariai must be 248x320! Found", hariai_image.size)
+    if (hariai_image.size != (250, 322)) and (hariai_image.size != (382, 502)):
+        print("hariai must be (250, 322) or (382, 502)! Found", hariai_image.size)
         exit(1)
 
     hariai_name = "ha_%04d" % (musicid)
@@ -702,20 +702,26 @@ def create_hariai(output_path, musicid, hariai_filename):
 
     open(os.path.join(hariai_output_folder, "magic"), "wb").write(b"NGPF")
     open(os.path.join(hariai_output_folder, "cversion"), "wb").write(b"1.3.72\0")
-
+    #texture xml parameters depending on the size 
+    xml_texture_data = [["256 512", "2 498 2 642", "0 500 0 644"], ["512 512", "2 762 2 1002", "0 764 0 1004"]] 
+    image_type = 0
+    #in case our image is the second type will use that
+    if hariai_image.size == (382, 502):
+        image_type = 1
+         
     hariai_xml = E.texturelist(
         E.texture(
             E.size(
-                "256 512",
+                xml_texture_data[image_type][0],
                 __type="2u16",
             ),
             E.image(
                 E.uvrect(
-                    "2 498 2 642",
+                    xml_texture_data[image_type][1],
                     __type="4u16"
                 ),
                 E.imgrect(
-                    "0 500 0 644",
+                    xml_texture_data[image_type][2],
                     __type="4u16"
                 ),
                 name=hariai_name
@@ -733,19 +739,6 @@ def create_hariai(output_path, musicid, hariai_filename):
     tex_path = os.path.join(hariai_output_folder, "tex")
     open(os.path.join(tex_path, "texturelist.xml"), "wb").write(tostring(hariai_xml, pretty_print=True, method='xml', encoding='utf-8', xml_declaration=True))
 
-    if hariai_image.size == (248, 320):
-        # Duplicate the edge pixels
-        new_hariai_image = Image.new('RGBA', (hariai_image.width + 2, hariai_image.height + 2))
-        new_hariai_image.paste(hariai_image, (1, 1))
-        new_hariai_image.paste(hariai_image.crop((0, 0, hariai_image.width, 1)), (1, 0)) # Top
-        new_hariai_image.paste(hariai_image.crop((0, hariai_image.height - 1, hariai_image.width, hariai_image.height)), (1, hariai_image.height + 1)) # Bottom
-        # new_hariai_image.paste(hariai_image.crop((1, 0, 2, hariai_image.height)), (0, 1)) # Left
-        new_hariai_image.paste(hariai_image.crop((hariai_image.width - 1, 0, hariai_image.width, hariai_image.height)), (hariai_image.width + 1, 1)) # Right
-        hariai_image = new_hariai_image
-
-    if hariai_image.size not in [(250, 322)]:
-        print("Unknown hariai size", hariai_filename, hariai_image.size)
-        exit(1)
 
     hariai_image.save(os.path.join(tex_path, hariai_name + ".png"))
 
@@ -766,9 +759,9 @@ if __name__ == "__main__":
     parser.add_argument('--keysounds-folder', help='Input folder containing keysounds', default=None, required=True)
     parser.add_argument('--preview', help='Input preview file (optional, overrides preview generation code)', default=None)
     parser.add_argument('--new', help='New chart format which supports hold notes', default=False, action='store_true')
-    parser.add_argument('--banner', help='Banner image (optional, must be 244x58)', default=None)
-    parser.add_argument('--bg', help='Background image (optional, must be 128x256)', default=None)
-    parser.add_argument('--hariai', help='Hariai image (optional, must be 248x320)', default=None)
+    parser.add_argument('--banner', help='Banner image (optional, must be 244x58)', default=None, required=True)
+    parser.add_argument('--bg', help='Background image (optional, must be 128x256)', default=None, required=True)
+    parser.add_argument('--hariai', help='Hariai image (optional, must be 250x322 or 382x502)', default=None)
     parser.add_argument('--metadata-fw-title', help='Fullwidth music title for database', default=None)
     parser.add_argument('--metadata-fw-artist', help='Fullwidth music artist for database', default=None)
     parser.add_argument('--metadata-fw-genre', help='Fullwidth music genre for database', default=None)
@@ -893,16 +886,16 @@ if __name__ == "__main__":
     tex_files = {}
     if args.banner:
         # Create banner folder
-        tex_files['kc_mod'] = create_banner(output_path, args.musicid, args.banner)
+        tex_files['kc_diff_ifs'] = create_banner(output_path, args.musicid, args.banner)
 
     if args.hariai:
         # Create hariai folder
-        tex_files['ha_mod'] = create_hariai(output_path, args.musicid, args.hariai)
+        tex_files['ha_merge_ifs'] = create_hariai(output_path, args.musicid, args.hariai)
         mask |= 0x00800000  # Required for songs that show a hariai image on the music selection screen
 
     if args.bg:
         # Create background folder
-        tex_files['bg_mod'] = create_bg(output_path, args.musicid, args.bg)
+        tex_files['bg_diff_ifs'] = create_bg(output_path, args.musicid, args.bg)
 
     if args.metadata_hariai_is_jacket:
         mask |= 0x00000020  # The alternate hariai image (set by using 0x800000) is a song jacket instead of a character portrait
@@ -921,7 +914,7 @@ if __name__ == "__main__":
         E.cs_version(str(args.metadata_cs_version), __type="u32"),
         E.categories(str(args.metadata_categories), __type="u32"),
         E.charts(*charts_xml),
-        E.ha(tex_files.get('ha_mod', ""), __type="str"),
+        E.ha(tex_files.get('ha_merge_ifs', ""), __type="str"),
         E.chara_x(str(args.metadata_chara_x), __type="u32"),
         E.chara_y(str(args.metadata_chara_y), __type="u32"),
         E.unk1("0 0 0 0 0 0 36 0 0 59 77 0 0 0 0 134 0 0 68 67 222 0 0 0 0 0 0 0 0 0 0 0", __type="u16", __count="32"),
