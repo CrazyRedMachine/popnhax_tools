@@ -753,14 +753,17 @@ if __name__ == "__main__":
     for difficulty in difficulties:
         parser.add_argument('--input-%s' % difficulty, help='Input file (%s)' % difficulty.upper(), default=None)
 
+    #Display required arguments on help
+    requiredNamed = parser.add_argument_group('required arguments')
+    #Arguments
     parser.add_argument('--output', help='Output folder', default="output")
-    parser.add_argument('--name', help='Base name used for output', default=None, required=True)
-    parser.add_argument('--musicid', help='Music ID used for the database file', required=True, type=int)
-    parser.add_argument('--keysounds-folder', help='Input folder containing keysounds', default=None, required=True)
+    requiredNamed.add_argument('--name', help='Base name used for output', default=None, required=True)
+    requiredNamed.add_argument('--musicid', help='Music ID used for the database file', required=True, type=int)
+    requiredNamed.add_argument('--keysounds-folder', help='Input folder containing keysounds', default=None, required=True)
     parser.add_argument('--preview', help='Input preview file (optional, overrides preview generation code)', default=None)
     parser.add_argument('--new', help='New chart format which supports hold notes', default=False, action='store_true')
-    parser.add_argument('--banner', help='Banner image (optional, must be 244x58)', default=None, required=True)
-    parser.add_argument('--bg', help='Background image (optional, must be 128x256)', default=None, required=True)
+    requiredNamed.add_argument('--banner', help='Banner image (must be 244x58)', default=None, required=True)
+    parser.add_argument('--bg', help='Background image (optional, must be 128x256)', default=None, required=False)
     parser.add_argument('--hariai', help='Hariai image (optional, must be 250x322 or 382x502)', default=None)
     parser.add_argument('--metadata-fw-title', help='Fullwidth music title for database', default=None)
     parser.add_argument('--metadata-fw-artist', help='Fullwidth music artist for database', default=None)
@@ -778,7 +781,8 @@ if __name__ == "__main__":
     parser.add_argument('--metadata-mask', help='Base mask value for database', default=0, type=int)
     parser.add_argument('--metadata-chara-x', help='Chara X entry for database', default=0, type=int)
     parser.add_argument('--metadata-chara-y', help='Chara Y entry for database', default=0, type=int)
-
+    
+    print("warning: no background specified, will only work with usaneko and up")
     if os.path.exists("bmx2wavc.exe"):
         parser.add_argument('--preview-offset', help='Offset from start in seconds (ex. 10.4 would be 10.4 seconds)', default=-1, type=float)
         parser.add_argument('--preview-duration', help='Length of preview in seconds', default=10, type=float)
