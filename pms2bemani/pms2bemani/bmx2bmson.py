@@ -231,7 +231,7 @@ class bms2bmson:
 											  "mc" : 0 })
 						break
 
-			if (ch > 50 and ch < 70):
+			if (ch > 50 and ch <= 70):
 				pln = i
 				while pln + 1 < len(self.NotePre):
 					pln = pln + 1
