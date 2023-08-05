@@ -79,12 +79,8 @@ Example: `python3 pms2bemani.py --input-np wonderingbeats/01_kouunn-n.pms --inpu
 
 ## GUI for pms2bemani
 
-GUI and manager for generate mods from p2b files.
-Based on the fields filled, makes a subprocess call to pms2bemani.py with arguments.
-This script needs to be in the same folder as pms2bemani.py and gui_stuff.
-
-p2b files:
-JSON file with attributes related to pms2bemani.py
+GUI and manager for pms2bemani.
+This script needs to be in the same folder as pms2bemani.py and gui_assets.
 
 
 ## Credits
