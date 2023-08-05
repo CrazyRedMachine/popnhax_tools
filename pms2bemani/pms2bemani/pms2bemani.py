@@ -398,9 +398,7 @@ def write_chart(events, output_filename, new_format):
 
             elif event['name'] == "key":
                 outfile.write(int.to_bytes(event['key'], 1, 'little'))
-
-                note_flag = 4 if new_format and event['length'] != 0 else 0
-                outfile.write(int.to_bytes(note_flag, 1, 'little'))
+                outfile.write(int.to_bytes(0, 1, 'little')) # highlight zone
 
             elif event['name'] in ["sample", "sample2"]:
                 outfile.write(int.to_bytes(event['value'] | (event['key'] << 12), 2, 'little'))
