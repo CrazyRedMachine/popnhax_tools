@@ -1,0 +1,98 @@
+{
+    "category":{
+        "c1":{
+            "text":"beatmania",
+            "value": 1
+        },
+        "c2":{
+            "text":"IIDX",
+            "value": 2
+        },
+        "c3":{
+            "text":"DDR",
+            "value": 4
+        },
+        "c4":{
+            "text":"Gitadora",
+            "value": 8
+        },
+        "c5":{
+            "text":"Mambo a Go Go",
+            "value": 16
+        },
+        "c6":{
+            "text":"pop'n stage",
+            "value": 32
+        },
+        "c7":{
+            "text":"Keyboarmania",
+            "value": 64
+        },
+        "c8":{
+            "text":"Dance Maniax",
+            "value": 128
+        },
+        "c9":{
+            "text":"bmIII",
+            "value": 256
+        },
+        "c10":{
+            "text":"Toy's March",
+            "value": 512
+        },
+        "c11":{
+            "text":"ee'mall",
+            "value": 1024
+        },
+        "c12":{
+            "text":"jubeat",
+            "value": 2048
+        },
+        "c13":{
+            "text":"Reflec Beat",
+            "value": 4096
+        },
+        "c14":{
+            "text":"SDVX",
+            "value": 8192
+        },
+        "c15":{
+            "text":"BeatStream",
+            "value": 16384
+        },
+        "c16":{
+            "text":"Nostalgia",
+            "value": 32768
+        }
+    },
+    "mask":{
+        "m1":{
+            "text":"Display a fake BPM",
+            "value": 8
+        },
+        "m3":{
+            "text":"TV/J-Pop category",
+            "value": 65536
+        },
+        "m4":{
+            "text":"Easy chart flag",
+            "value": 524288
+        },
+        "m5":{
+            "text":"Hyper chart flag",
+            "value": 16777216
+        },
+        "m6":{
+            "text":"Ex chart flag",
+            "value": 33554432
+        },
+        "m7":{
+            "text":"Battle hyper chart flag",
+            "value": 67108864
+        },
+        "m9":{
+            "text":"Default for placeholder songs",
+            "value": 2147483648
+        }
+    }
+}
