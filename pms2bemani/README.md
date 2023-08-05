@@ -77,6 +77,12 @@ required arguments:
 
 Example: `python3 pms2bemani.py --input-np wonderingbeats/01_kouunn-n.pms --input-hp wonderingbeats/02_kouunn-h.pms --input-op wonderingbeats/03_kouunn-ex.pms --keysounds-folder wonderingbeats --name wonderingbeats_convert --new --preview-offset 10.4 --preview-duration 15`
 
+## GUI for pms2bemani
+
+GUI and manager for pms2bemani.
+This script needs to be in the same folder as pms2bemani.py and gui_assets.
+
+
 ## Credits
 - ifstools (https://github.com/mon/ifstools)
 - 2dxTools (https://github.com/mon/2dxTools)

@@ -538,6 +538,7 @@ def generate_preview(input_filename, output_filename, offset, duration):
 
 
 def get_real_keysound_filename(input_filename, keysounds_folder):
+    
     if not input_filename:
         return None
 
@@ -546,13 +547,14 @@ def get_real_keysound_filename(input_filename, keysounds_folder):
     if os.path.exists(target_path):
         # The file exists already
         return target_path
-
+    
+    extensions = [".wav",".ogg"]
     # The file doesn't exist, so try to match it with other extensions
-    target_path = os.path.join(keysounds_folder, "%s.*" % (os.path.splitext(input_filename)[0]))
-    found_files = insensitive_glob(target_path)
-
-    if found_files:
-        return found_files[0]
+    for extension in extensions:
+     target_path = os.path.join(keysounds_folder, ("%s"+ extension) % (os.path.splitext(input_filename)[0]))
+     if os.path.exists(target_path):
+         # The file exists already
+         return target_path
 
 
     print("Couldn't find", input_filename)

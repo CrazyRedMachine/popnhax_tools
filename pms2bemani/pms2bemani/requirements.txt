@@ -1,2 +1,5 @@
 ifstools==1.13
 pydub==0.23.1
+jaconv==0.3
+lxml==4.9.1
+Pillow==8.3.1
