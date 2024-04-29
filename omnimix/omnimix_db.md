@@ -142,6 +142,7 @@ These fields are used to sort, therefore DO NOT USE HIRAGANA OR KANJI else your 
   - 0x00000008: Display a fake BPM range at the options screen, as defined by 'display_bpm'
   - 0x00000020: The alternate hariai image (set by using 0x800000) is a song jacket instead of a character portrait
   - 0x00000080: Seems to be related to locking away songs
+  - 0x00000100: Forces loading background (unilab)
   - 0x00010000: TV/J-Pop category flag is
   - 0x00080000: Easy chart flag
   - 0x00800000: Required for songs that show a hariai image on the music selection screen
