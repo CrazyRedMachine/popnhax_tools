@@ -798,7 +798,7 @@ if __name__ == "__main__":
 
     output_path = os.path.join(args.output, args.name)
 
-    mask = args.metadata_mask
+    mask = args.metadata_mask + 256 if args.bg != None else args.metadata_mask
     charts_xml = []
 
     # Generate list of keysounds based on input charts
