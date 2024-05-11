@@ -752,6 +752,7 @@ if __name__ == "__main__":
 
     for difficulty in difficulties:
         parser.add_argument('--input-%s' % difficulty, help='Input file (%s)' % difficulty.upper(), default=None)
+        parser.add_argument('--lvl-%s' % difficulty, help='level difficulty (%s)' % difficulty.upper(), default=None, type=int)
 
     #Display required arguments on help
     requiredNamed = parser.add_argument_group('required arguments')
@@ -824,7 +825,11 @@ if __name__ == "__main__":
             )
 
             args.new = True  # In case the song has long notes and the user forgot to set the new flag, upgrade it automatically
-
+        
+        # Chart level
+        level = args_vars['lvl_%s' % difficulty]
+        level = level if level != None else 1
+        
         chart = E.chart(
             E.folder("custom", __type="str"),
             E.filename(args.name, __type="str"),
@@ -834,7 +839,7 @@ if __name__ == "__main__":
             E.audio_param4("0", __type="s32"),
             E.file_type("0", __type="u32"),
             E.used_keys("0", __type="u16"),
-            E.diff("1", __type="u8"),
+            E.diff(str(level), __type="u8"),
             E.hold_flag("1" if has_hold_notes else "0", __type="u8"),
             idx=str(difficulty),
             *optional

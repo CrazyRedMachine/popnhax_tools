@@ -106,9 +106,29 @@ class Application(tkinter.Frame):
         self.find_keysounds.grid(column=2, row=3,sticky="W")
 
  
+        # Create the list of pop'n music levels
+        self.levels = []
+        [self.levels.append(x+1) for x in range(50)]
+        # Variable to keep track of the option
+        # selected in OptionMenu
+        self.value_inside_bp_lv = tkinter.StringVar(parent)
+        self.value_inside_ep_lv = tkinter.StringVar(parent)
+        self.value_inside_np_lv = tkinter.StringVar(parent)
+        self.value_inside_hp_lv = tkinter.StringVar(parent)
+        self.value_inside_op_lv = tkinter.StringVar(parent)
+        # Set the default value of the variable
+        self.value_inside_bp_lv.set("1")
+        self.value_inside_ep_lv.set("1")
+        self.value_inside_np_lv.set("1")
+        self.value_inside_hp_lv.set("1")
+        self.value_inside_op_lv.set("1")
+
+
         #Charts title
         self.tag_charts_title = tkinter.Label(parent, text=self.tr["Charts"])
         self.tag_charts_title.grid(column=0, row=5,pady = 2,sticky='ew')
+        self.tag_charts_title = tkinter.Label(parent, text=self.tr["Level"])
+        self.tag_charts_title.grid(column=3, row=5,pady = 2,sticky='ew')
         #battle mode stuff
         self.tag_input_bp = tkinter.Label(parent, text=self.tr["Battle Mode File"])
         self.tag_input_bp.grid(column=0, row=6,sticky="W",pady = 2)
@@ -116,13 +136,19 @@ class Application(tkinter.Frame):
         self.box_input_bp.grid(column=1, row=6,sticky='ew')
         self.find_input_bp = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_bp))
         self.find_input_bp.grid(column=2, row=6,sticky="W")
+        #battle mode level objects
+        self.question_menu_bp_lv = tkinter.OptionMenu(parent, self.value_inside_bp_lv, *self.levels)
+        self.question_menu_bp_lv.grid(column=3, row=6,sticky="EW")
         #Easy difficulty
         self.tag_input_ep = tkinter.Label(parent, text=self.tr["Easy Chart File"])
         self.tag_input_ep.grid(column=0, row=7,sticky="W",pady = 2)
         self.box_input_ep = tkinter.Entry(parent)
         self.box_input_ep.grid(column=1, row=7,sticky='ew')
         self.find_input_ep = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_ep))
-        self.find_input_ep.grid(column=2, row=7,sticky="W")
+        self.find_input_ep.grid(column=2, row=7,sticky="W")        
+        #Easy difficulty level objects
+        self.question_menu_ep_lv = tkinter.OptionMenu(parent, self.value_inside_ep_lv, *self.levels)
+        self.question_menu_ep_lv.grid(column=3, row=7,sticky="EW")
         #Normal difficulty
         self.tag_input_np = tkinter.Label(parent, text=self.tr["Normal Chart File"])
         self.tag_input_np.grid(column=0, row=8,sticky="W",pady = 2)
@@ -130,6 +156,9 @@ class Application(tkinter.Frame):
         self.box_input_np.grid(column=1, row=8,sticky='ew')
         self.find_input_np = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_np))
         self.find_input_np.grid(column=2, row=8,sticky="W")
+        #Normal difficulty level objects
+        self.question_menu_np_lv = tkinter.OptionMenu(parent, self.value_inside_np_lv, *self.levels)
+        self.question_menu_np_lv.grid(column=3, row=8,sticky="EW")
         #Hyper difficulty
         self.tag_input_hp = tkinter.Label(parent, text=self.tr["Hyper Chart File"])
         self.tag_input_hp.grid(column=0, row=9,sticky="W",pady = 2)
@@ -137,6 +166,9 @@ class Application(tkinter.Frame):
         self.box_input_hp.grid(column=1, row=9,sticky='ew')
         self.find_input_hp = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_hp))
         self.find_input_hp.grid(column=2, row=9,sticky="W")
+        #Hyper difficulty level objects
+        self.question_menu_hp_lv = tkinter.OptionMenu(parent, self.value_inside_hp_lv, *self.levels)
+        self.question_menu_hp_lv.grid(column=3, row=9,sticky="EW")
         #Ex difficulty
         self.tag_input_op = tkinter.Label(parent, text=self.tr["Ex Chart File"])
         self.tag_input_op.grid(column=0, row=10,sticky="W",pady = 2)
@@ -144,6 +176,9 @@ class Application(tkinter.Frame):
         self.box_input_op.grid(column=1, row=10,sticky='ew')
         self.find_input_op = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_op))
         self.find_input_op.grid(column=2, row=10,sticky="W")
+        #Ex difficulty level objects
+        self.question_menu_op_lv = tkinter.OptionMenu(parent, self.value_inside_op_lv, *self.levels)
+        self.question_menu_op_lv.grid(column=3, row=10,sticky="EW")
         #Metadata
         self.tag_metadata = tkinter.Label(parent, text=self.tr["Metadata"])
         self.tag_metadata.grid(column=0, row=11,pady = 2,sticky='ew')
@@ -421,6 +456,11 @@ class Application(tkinter.Frame):
       self.bool_to_param("--metadata-has-battle-hyper",self.has_battle_var)
       self.bool_to_param("--metadata-hariai-is-jacket",self.is_jacket_var)
       self.box_to_param("--metadata-folder",self.value_inside_folder)
+      self.box_to_param("--lvl-bp",self.value_inside_bp_lv)
+      self.box_to_param("--lvl-ep",self.value_inside_ep_lv)
+      self.box_to_param("--lvl-np",self.value_inside_np_lv)
+      self.box_to_param("--lvl-hp",self.value_inside_hp_lv)
+      self.box_to_param("--lvl-op",self.value_inside_op_lv)
       self.bitfields_to_param("--metadata-categories",self.vars_category)
       self.box_to_param("--metadata-cs-version",self.value_inside_cs)
       self.bitfields_to_param("--metadata-mask",self.vars_mask)
@@ -661,6 +701,11 @@ class Application(tkinter.Frame):
       data["Has battle hyper"]=self.has_battle_var.get()
       data["Hariai is jacket"]=self.is_jacket_var.get()
       data["Folder"]=self.value_inside_folder.get()
+      data["Lvl bp"]=self.value_inside_bp_lv.get()
+      data["Lvl ep"]=self.value_inside_ep_lv.get()
+      data["Lvl np"]=self.value_inside_np_lv.get()
+      data["Lvl hp"]=self.value_inside_hp_lv.get()
+      data["Lvl op"]=self.value_inside_op_lv.get()
 
       category_data = {}
       for label, value in zip(self.category_des, self.vars_category):
@@ -685,6 +730,17 @@ class Application(tkinter.Frame):
       data["Output folder"]=self.box_output.get()
 
       return(json.dumps(data))
+    
+
+    def set_val(self, data, name: str, default: str = "") -> str:
+        val = data.get(name)
+        
+        if val is None:
+            return default
+        if type(val)  != str:
+            return default
+        return val
+
 
     def p2b_to_fields(self,data,parent):
 
@@ -708,6 +764,11 @@ class Application(tkinter.Frame):
       self.has_battle_var.set(data["Has battle hyper"])
       self.is_jacket_var.set(data["Hariai is jacket"])
       self.value_inside_folder.set(data["Folder"])
+      self.value_inside_bp_lv.set(self.set_val(data,"Lvl bp","1"))
+      self.value_inside_ep_lv.set(self.set_val(data,"Lvl ep","1"))
+      self.value_inside_np_lv.set(self.set_val(data,"Lvl np","1"))
+      self.value_inside_hp_lv.set(self.set_val(data,"Lvl hp","1"))
+      self.value_inside_op_lv.set(self.set_val(data,"Lvl op","1"))
       
       for label, value in zip(self.category_des, self.vars_category):
           value.set(data["Categories"][label])
@@ -763,6 +824,11 @@ class Application(tkinter.Frame):
       self.has_battle_var.set(False)
       self.is_jacket_var.set(False)
       self.value_inside_folder.set(None)
+      self.value_inside_bp_lv.set(1)
+      self.value_inside_ep_lv.set(1)
+      self.value_inside_np_lv.set(1)
+      self.value_inside_hp_lv.set(1)
+      self.value_inside_op_lv.set(1)
       
       for label, value in zip(self.category_des, self.vars_category):
           value.set(0)
