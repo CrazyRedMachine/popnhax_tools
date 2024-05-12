@@ -5,6 +5,7 @@ import os
 import jaconv
 import subprocess
 import re
+import cutlet
 from tkinter import filedialog as fd
 from tkinter import messagebox
 from tkinter.messagebox import showinfo,askyesno
@@ -65,7 +66,7 @@ class Application(tkinter.Frame):
         self.has_battle_var = BooleanVar()
         self.is_jacket_var = BooleanVar()
         self.new_chart_format = BooleanVar()
-
+        self.hariai_in_game = BooleanVar()
         # first menu
         self.menu_bar= tkinter.Menu(parent)
         self.menu_file = tkinter.Menu(self.menu_bar, tearoff=False)
@@ -223,14 +224,14 @@ class Application(tkinter.Frame):
         self.tag_chara_1.grid(column=0, row=18,sticky="W",pady = 2)
         self.box_chara_1 = tkinter.Entry(parent)
         self.box_chara_1.grid(column=1, row=18,sticky='ew')
-        self.sel_chara_1 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_1))
+        self.sel_chara_1 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_1,0))
         self.sel_chara_1.grid(column=2, row=18,sticky="W")
         #Chara 2
         self.tag_chara_2 = tkinter.Label(parent, text=self.tr["Chara 2"])
         self.tag_chara_2.grid(column=0, row=19,sticky="W",pady = 2)
         self.box_chara_2 = tkinter.Entry(parent)
         self.box_chara_2.grid(column=1, row=19,sticky='ew')
-        self.sel_chara_2 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_2))
+        self.sel_chara_2 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_2,0))
         self.sel_chara_2.grid(column=2, row=19,sticky="W")
         #Has battle hyper
         self.tag_battle_hyper = tkinter.Label(parent, text=self.tr["Has battle hyper"])
@@ -372,19 +373,27 @@ class Application(tkinter.Frame):
         self.find_hariai.grid(column=7, row=25,sticky="W")
         self.clean_hariai = tkinter.Button(parent,text=self.tr["Clean"],command=lambda: self.clean_image(parent,"hariai",self.box_hariai))
         self.clean_hariai.grid(column=8, row=25,sticky="w",columnspan=1)
+        #Hariai from game
+        self.tag_game_hariai = tkinter.Label(parent, text=self.tr["From game files"])
+        self.tag_game_hariai.grid(column=5, row=26,sticky="W",pady = 2)
+        self.check_game_hariai = tkinter.Checkbutton(parent,onvalue=True, offvalue=False,variable=self.hariai_in_game)
+        self.check_game_hariai.grid(column=6, row=26,sticky='ew')
+        self.game_hariai = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_hariai,2))
+        self.game_hariai.grid(column=7, row=26,sticky="w",columnspan=1)
+ 
 
 
         #Output folder
         self.tag_output = tkinter.Label(parent, text=self.tr["Output folder"])
-        self.tag_output.grid(column=5, row=26,sticky="W",pady = 2)
+        self.tag_output.grid(column=5, row=27,sticky="W",pady = 2)
         self.box_output= tkinter.Entry(parent)
-        self.box_output.grid(column=6, row=26,sticky='ew')
+        self.box_output.grid(column=6, row=27,sticky='ew')
         self.find_output = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_directory(self.box_output))
-        self.find_output.grid(column=7, row=26,sticky="W")
+        self.find_output.grid(column=7, row=27,sticky="W")
 
         #Create Mod
         self.create_mod = tkinter.Button(parent,text=self.tr["Create Mod"],command=lambda:self.generate_mod())
-        self.create_mod.grid(column=6, row=28,sticky="EW")
+        self.create_mod.grid(column=6, row=29,sticky="EW")
 
         #Banner display
         self.tag_image_banner=tkinter.Label(parent, text=self.tr["Banner"])
@@ -455,6 +464,7 @@ class Application(tkinter.Frame):
       self.box_to_param("--metadata-chara2",self.box_chara_2)
       self.bool_to_param("--metadata-has-battle-hyper",self.has_battle_var)
       self.bool_to_param("--metadata-hariai-is-jacket",self.is_jacket_var)
+      self.bool_to_param("--metadata-hariai-in-game",self.hariai_in_game)
       self.box_to_param("--metadata-folder",self.value_inside_folder)
       self.box_to_param("--lvl-bp",self.value_inside_bp_lv)
       self.box_to_param("--lvl-ep",self.value_inside_ep_lv)
@@ -557,6 +567,7 @@ class Application(tkinter.Frame):
             return 0
          widget.delete(0,"end")
          widget.insert(0,filename)
+         self.hariai_in_game.set(False)
 
     
          
@@ -727,6 +738,7 @@ class Application(tkinter.Frame):
       data["New chart format"]=self.new_chart_format.get()
       data["Background"]=self.box_background.get()
       data["Hariai"]=self.box_hariai.get()
+      data["Hariai in game"]=self.hariai_in_game.get()
       data["Output folder"]=self.box_output.get()
 
       return(json.dumps(data))
@@ -738,6 +750,15 @@ class Application(tkinter.Frame):
         if val is None:
             return default
         if type(val)  != str:
+            return default
+        return val
+    
+    def set_bool(self, data, name: str, default: bool = False) -> bool:
+        val = data.get(name)
+        
+        if val is None:
+            return default
+        if type(val)  != bool:
             return default
         return val
 
@@ -798,8 +819,17 @@ class Application(tkinter.Frame):
         self.insert_image(parent,data["Banner"],self.box_banner,"banner")
       if(data["Background"]!=''):
         self.insert_image(parent,data["Background"],self.box_background,"bg")
+
+      hariai_is_in_game = self.set_bool(data,"Hariai in game")
+      self.hariai_in_game.set(hariai_is_in_game)
       if(data["Hariai"]!=''):
-        self.insert_image(parent,data["Hariai"],self.box_hariai,"hariai")
+        if hariai_is_in_game == False:
+            self.insert_image(parent,data["Hariai"],self.box_hariai,"hariai")
+        else:
+            self.box_hariai.delete(0,"end")
+            self.box_hariai.insert(0,data["Hariai"])
+
+
       self.menu_file.entryconfig(2, state=ACTIVE)
 
     def new_fields(self,parent):
@@ -847,6 +877,7 @@ class Application(tkinter.Frame):
       self.new_chart_format.set(False)
       self.replace_value(self.box_background,"")
       self.replace_value(self.box_hariai,"")
+      self.hariai_in_game.set(False)
       self.replace_value(self.box_output,"")
 
       #clean images
@@ -933,7 +964,7 @@ class Application(tkinter.Frame):
       elif save == False:
           parent.destroy()
 
-    def chara_selection(self,parent,widget):
+    def chara_selection(self,parent,widget,pos):
         # Toplevel object which will
         # be treated as a new window
         ctWin = Toplevel(parent)
@@ -943,25 +974,47 @@ class Application(tkinter.Frame):
         ctWin.geometry("200x200")
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_columnconfigure(3, weight=0)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=0)        
+        self.grid_rowconfigure(2, weight=0)  
+        self.grid_rowconfigure(3, weight=0)  
 
         #creating text box 
         e = Entry(ctWin)
         e.pack(side='top', fill='x', expand=True)
         e.bind('<KeyRelease>', self.checkkey)
+
+        #buttons
+        btn_romaji = Button(ctWin,text="romaji",command=lambda: self.list_to_romaji())
+        btn_romaji.pack()
+        btn_katakana = Button(ctWin,text="katakana",command=lambda: self.list_to_katakana())
+        btn_katakana.pack()
           
         #creating list box
         self.lb = Listbox(ctWin)
         self.lb.pack(side='top', fill='x', expand=True)
-        self.lb.bind('<<ListboxSelect>>', lambda eff: self.onselect(eff,widget))
+        self.lb.bind('<<ListboxSelect>>', lambda eff: self.onselect(eff,widget,pos))
         self.update(self.l)
         
            
         ctWin.transient(parent)
         ctWin.grab_set()
         parent.wait_window(ctWin)
+    
+    def list_to_romaji(self):
+        new_list = []
+        katsu = cutlet.Cutlet()
+        for line in self.l:
+            new_list.append([line[0],katsu.romaji(line[1]),line[2]])
+        self.l = new_list 
+        self.update(self.l)
 
+    def list_to_katakana(self):
+        self.l=self.chara_txt_to_data()
+        self.update(self.l)
+    
     # Function for checking the
     # key pressed and updating
     # the listbox
@@ -975,7 +1028,7 @@ class Application(tkinter.Frame):
         else:
             data = []
             for item in self.l:
-                if value.lower() in item.lower():
+                if value.lower() in ''.join(str(x) for x in item).lower():
                     data.append(item)                
        
         # update data in listbox
@@ -990,12 +1043,15 @@ class Application(tkinter.Frame):
         for item in data:
             self.lb.insert('end', item)
 
-    def onselect(self,event,widget):
+    def onselect(self,event,widget,pos):
         # Note here that Tkinter passes an event object to onselect()
         w = event.widget
         index = int(w.curselection()[0])
         value = w.get(index)
-        self.replace_value(widget,value)
+        self.replace_value(widget,value[pos])
+        # Hariai in game
+        if pos == 2:
+            self.hariai_in_game.set(True)
 
     def chara_txt_to_data(self):
         # Using readlines()
@@ -1004,7 +1060,10 @@ class Application(tkinter.Frame):
         charas = []
         # Strips the newline character
         for line in Lines:
-            charas.append(line.split(',')[0].replace("'",'').strip())
+            chara_anim = line.split(',')[0].replace("'",'').strip()
+            ha = line.split(',')[15].replace("'",'').strip()
+            chara_name = line.split(',')[10].replace("'",'').strip()
+            charas.append([chara_anim,chara_name,ha])
         return charas
 
     
