@@ -4,6 +4,21 @@ Refer to [omnimix_db.md](omnimix_db.md)
 
 # Omnimix tools
 
+## fix_backgrounds.py
+
+Fixes musicdb xmls for correct background display in unilab+.
+
+(Unilab has changed the mask bitfield to add a "force load background" entry. This script will check all songs with a bg_xxxx.ifs file and update the xmls accordingly)
+
+Usage:
+1. Copy fix_backgrounds.py in data_mods folder
+2. Run the script
+3. Verify the backgrounds are working as expected
+
+**Note**: All modified XMLs are first copied to `data_mods\_fix_backgrounds_backup`. If you encounter any issue, copy this folder contents back into data_mods and overwrite when prompted.
+
+This will restore the initial state.
+
 ## ida_find_addrs.py
 
 IDA script tested in 6.6 and 7.x.
