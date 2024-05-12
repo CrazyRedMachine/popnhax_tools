@@ -2,19 +2,27 @@ import tkinter
 from tkinter import *
 import json
 import os
+import pygame
 import jaconv
 import subprocess
 import re
 import cutlet
+import platform
+import threading
+import time
 from tkinter import filedialog as fd
 from tkinter import messagebox
 from tkinter.messagebox import showinfo,askyesno
 from PIL import  ImageTk,ImageDraw,Image
 
+on_wsl = "microsoft" in platform.uname()[3].lower()
+
 class Application(tkinter.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.current_file = ''
+        # Initialize pygame mixer
+        pygame.mixer.init()
         #load translation
         translation_file = open('gui_assets/gui_translation.json')
         translation_data = json.load(translation_file)
@@ -364,6 +372,10 @@ class Application(tkinter.Frame):
         self.find_preview_file = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_sound(self.box_preview_file))
         self.find_preview_file.grid(column=2, row=29,sticky="W")
 
+        # Sound Player window
+        self.open_sound_button = tkinter.Button(parent, text=self.tr["Player"], command=lambda:self.open_sound_player(parent))
+        self.open_sound_button.grid(column=3,row=29,sticky="W")
+
         #Preview offset
         self.tag_preview_offset = tkinter.Label(parent, text=self.tr["Preview offset"])
         self.tag_preview_offset.grid(column=0, row=30,sticky="W",pady = 2)
@@ -454,6 +466,115 @@ class Application(tkinter.Frame):
         self.tag_image_hariai = tkinter.Label(parent, text=self.tr["Hariai"])
         self.tag_image_hariai.grid(column=6, row=4,sticky="W",pady = 3)
         self.clean_image(parent,"hariai",self.box_hariai)
+
+    def open_sound_player(self,parent):
+        # Toplevel object which will
+        # be treated as a new window
+        ctWin = Toplevel(parent)
+        # sets the title of the
+        # Toplevel widget
+        ctWin.title(self.tr["Sound Player"])
+        ctWin.geometry("400x200")
+        ctWin.protocol("WM_DELETE_WINDOW", lambda: self.stop_player(ctWin))
+        source_mgs_txt = self.tr["Source"]
+        # Check if using custom preview
+        custom = False
+        if self.box_preview_file.get().strip():
+            source_txt = self.tr["Custom Preview"]
+            custom = True
+            render_filename = self.box_preview_file.get()
+        else:
+            source_txt = self.tr["Pms files"]
+            pms_files = [
+                self.box_input_bp.get(),
+                self.box_input_ep.get(),
+                self.box_input_np.get(),
+                self.box_input_hp.get(),
+                self.box_input_op.get(),
+                ]
+            pms_to_preview = ""
+            for file in pms_files:
+                if file and os.path.isfile(file):
+                    pms_to_preview = file
+                    break
+            # If already exist, no need to generate again
+            render_filename = os.path.join("tmp", "%s_full.wav" % self.box_name.get())
+
+            if os.path.isfile(render_filename) == False:
+                self.generate_preview(pms_to_preview,render_filename)
+
+            # Get Preview offset and Preview duration values
+            preview_offset = self.box_preview_offset.get()
+            preview_duration = self.box_preview_duration.get()
+    
+            offset_txt = self.tr["Preview offset"]
+            duration_txt = self.tr["Preview duration"]
+            tkinter.Label(ctWin, text=f"{offset_txt}: {preview_offset}").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+            tkinter.Label(ctWin, text=f"{duration_txt}: {preview_duration}").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+    
+        tkinter.Label(ctWin, text=f"{source_mgs_txt}: {source_txt}").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+
+        # Sounds Managment buttons
+        self.play_button = tkinter.Button(ctWin, text=self.tr["Play"], command=lambda:self.play_sound(custom,render_filename))
+        self.play_button.grid(row=4, column=0, padx=5, pady=5)
+        self.stop_button = tkinter.Button(ctWin, text=self.tr["Stop"], command=self.stop_sound)
+        self.stop_button.grid(row=4, column=1, padx=5, pady=5)
+        if custom == False:
+            self.stop_button = tkinter.Button(ctWin, text=self.tr["Recreate Preview"], command=lambda:self.regenerate_preview(pms_to_preview,render_filename))
+            self.stop_button.grid(row=4, column=2, padx=5, pady=5)   
+
+    def play_sound(self,custom,file_path):
+
+        if custom:
+            start = 0
+        else:
+            start = int(self.box_preview_offset.get())
+            end = int(self.box_preview_duration.get())
+
+        if file_path and os.path.isfile(file_path):
+            # Load Music
+            pygame.mixer.music.load(file_path)
+            pygame.mixer.music.play(start=start)
+
+            if (custom == False) and (end >= 1):
+                stop_thread = threading.Thread(target=self.stop_music_after, args=(end,)).start()
+
+
+    def stop_music_after(self,seconds):
+        time.sleep(seconds)
+        pygame.mixer.music.stop()
+        
+    def stop_sound(self):
+        pygame.mixer.music.stop()
+
+    def stop_player(self,parent):
+        pygame.mixer.music.stop()
+        parent.destroy()
+
+    def generate_render(self,input_filename, output_filename):
+
+        if not os.path.exists("bmx2wavc.exe"):
+                tkinter.messagebox.showerror(title=self.tr["Error"], message=self.tr["bmx2wavc error"])
+
+    
+        if on_wsl:
+            os.system("""./bmx2wavc.exe "%s" "%s" """ % (input_filename, output_filename))
+    
+        else:
+            os.system("""bmx2wavc.exe "%s" "%s" """ % (input_filename, output_filename))
+
+    def regenerate_preview(self,input_filename, output_filename):
+        self.generate_preview(input_filename, output_filename)
+        pygame.mixer.init()
+        pygame.mixer.music.load(output_filename)
+
+    def generate_preview(self,input_filename, output_filename):
+        # Delete if exists
+        if os.path.exists(output_filename):
+            pygame.mixer.quit()
+            os.remove(output_filename)
+        messagebox.showinfo(title=self.tr["Preview"],message=self.tr["Gen preview"])
+        self.generate_render(input_filename, output_filename)
 
 
     def box_to_param(self,param,widget):

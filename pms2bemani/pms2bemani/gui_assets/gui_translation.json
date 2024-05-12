@@ -40,6 +40,8 @@
 			"Preview": "Preview",
 			"Preview file": "Preview file",
 			"Preview offset": "Preview offset",
+			"Player": "Player",
+			"Sound Player": "Sound Player",
 			"Preview duration": "Preview duration",
 			"Extra": "Extra",
 			"New chart format": "New chart format",
@@ -52,7 +54,16 @@
 			"Image error": "Image should be the same size as the ones displayed on menu",
 			"Close message": "Do you want to save %s before closing?",
 			"Python command": "Python command",
-			"Command warning": "(Name of your python instances for pms2bemani)"
+			"Command warning": "(Name of your python instances for pms2bemani)",
+			"Source": "Source",
+			"Pms files": "Pms files",
+			"Custom Preview": "Custom Preview",
+			"Play": "Play",
+			"Stop": "Stop",
+			"Recreate Preview": "Recreate Preview",
+			"bmx2wavc error": "bmx2wavc.exe is required to generate previews",
+			"Error": "Error",
+			"Gen preview": "Generating preview, press Ok to continue"
 		}
 	},
 	"selected": "English"
