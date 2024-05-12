@@ -800,7 +800,7 @@ if __name__ == "__main__":
 
     output_path = os.path.join(args.output, args.name)
 
-    mask = args.metadata_mask + 256 if args.bg != None else args.metadata_mask
+    mask = args.metadata_mask
     charts_xml = []
 
     # Generate list of keysounds based on input charts
@@ -912,6 +912,7 @@ if __name__ == "__main__":
     if args.bg:
         # Create background folder
         tex_files['bg_diff_ifs'] = create_bg(output_path, args.musicid, args.bg)
+        mask |= 0x00000100  # Required for songs that shows a background
 
     if args.metadata_hariai_is_jacket:
         mask |= 0x00000020  # The alternate hariai image (set by using 0x800000) is a song jacket instead of a character portrait

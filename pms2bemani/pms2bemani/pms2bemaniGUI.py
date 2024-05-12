@@ -562,12 +562,12 @@ class Application(tkinter.Frame):
             self.tag_image_hariai = tkinter.Label(parent,image=banner)
             self.tag_image_hariai.image = banner
             self.tag_image_hariai.grid(column=4, row=5,sticky="W",pady = 2,rowspan=13,columnspan=3)
+            self.hariai_in_game.set(False)
          else:
             tkinter.messagebox.showerror(title="Error", message=self.tr["Image error"])
             return 0
          widget.delete(0,"end")
          widget.insert(0,filename)
-         self.hariai_in_game.set(False)
 
     
          
