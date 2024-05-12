@@ -29,9 +29,31 @@ class Application(tkinter.Frame):
         #load category data
         self.l = self.chara_txt_to_data()
 
+        # Get screen dimensions
+        screen_width = parent.winfo_screenwidth()
+        screen_height = parent.winfo_screenheight()
+
+        # Get desired siexe
+        window_width = int(screen_width * 0.4)
+        window_height = int(screen_height * 0.8)
+
+        # Window spawn pos
+        x_position = (screen_width - window_width) // 2
+        y_position = (screen_height - window_height) // 2
+
+        parent.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+        # Create canvas as a widget container
+        self.canvas = tkinter.Canvas(parent)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+
+        # Create Frame in canvas
+        self.frame = tkinter.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
+
         #grids
         for i in range(38):
-          parent.columnconfigure(i, weight=10)
+          self.frame.columnconfigure(i, weight=10)
  
         #load masks
         mask_file = open('gui_assets/metadata.json')
@@ -80,7 +102,29 @@ class Application(tkinter.Frame):
         self.menu_bar.add_cascade(label=self.tr["Options"],command=lambda:self.options(parent))
         parent.config(menu=self.menu_bar)
         #create window widgets
-        self.create_widgets(parent)
+        self.create_widgets(self.frame)
+
+        # Vertical scrollbar
+        scrollbar_y = tkinter.Scrollbar(parent, orient=tkinter.VERTICAL, command=self.canvas.yview)
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+
+        # Horizontal scrollbar
+        scrollbar_x = tkinter.Scrollbar(parent, orient=tkinter.HORIZONTAL, command=self.canvas.xview)
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
+
+        # Add scrollbar in canvas
+        self.canvas.config(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+        # Expand frame
+        parent.grid_rowconfigure(0, weight=1)
+        parent.grid_columnconfigure(0, weight=1)
+
+        # Canvas move event
+        self.frame.bind("<Configure>", self.on_frame_configure)
+
+    def on_frame_configure(self, event):
+        # Update canvas size
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
     def create_widgets(self,parent):
@@ -300,12 +344,12 @@ class Application(tkinter.Frame):
         #Chara X
         self.tag_chara_position_x = tkinter.Label(parent, text=self.tr["Chara position X"])
         self.tag_chara_position_x.grid(column=0, row=26,sticky="W",pady = 2)
-        self.box_chara_position_x = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_chara_position_x = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_chara_position_x.grid(column=1, row=26)
         #Chara Y
         self.tag_chara_position_y = tkinter.Label(parent, text=self.tr["Chara position Y"])
         self.tag_chara_position_y.grid(column=0, row=27,sticky="W",pady = 2)
-        self.box_chara_position_y = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_chara_position_y = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_chara_position_y.grid(column=1, row=27)
 
         #Preview
@@ -323,13 +367,13 @@ class Application(tkinter.Frame):
         #Preview offset
         self.tag_preview_offset = tkinter.Label(parent, text=self.tr["Preview offset"])
         self.tag_preview_offset.grid(column=0, row=30,sticky="W",pady = 2)
-        self.box_preview_offset = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_preview_offset = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_preview_offset.grid(column=1, row=30)
 
         #Preview duration
         self.tag_preview_duration = tkinter.Label(parent, text=self.tr["Preview duration"])
         self.tag_preview_duration.grid(column=0, row=31,sticky="W",pady = 2)
-        self.box_preview_duration = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_preview_duration = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_preview_duration.grid(column=1, row=31)
 
         #Extra
@@ -548,18 +592,18 @@ class Application(tkinter.Frame):
          banner = ImageTk.PhotoImage(my_image)
  
          if type == "banner" and my_image.size == (244,58):
-          self.tag_image_banner = tkinter.Label(parent,image=banner)
+          self.tag_image_banner = tkinter.Label(self.frame,image=banner)
           self.tag_image_banner.image = banner
           self.tag_image_banner.grid(column=6, row=0,sticky="W",pady = 2,rowspan=4,columnspan=3)
          elif type == "bg" and my_image.size == (128, 256):
-          self.tag_image_bg = tkinter.Label(parent,image=banner)
+          self.tag_image_bg = tkinter.Label(self.frame,image=banner)
           self.tag_image_bg.image = banner
           self.tag_image_bg.grid(column=7, row=4,sticky="W",pady = 2,rowspan=13,columnspan=2)
          elif type == "hariai" and ((my_image.size == (250, 322)) or (my_image.size == (382, 502))):
             if((my_image.size == (382, 502))):
               my_image = my_image.resize((250, 322))
             banner = ImageTk.PhotoImage(my_image)
-            self.tag_image_hariai = tkinter.Label(parent,image=banner)
+            self.tag_image_hariai = tkinter.Label(self.frame,image=banner)
             self.tag_image_hariai.image = banner
             self.tag_image_hariai.grid(column=4, row=5,sticky="W",pady = 2,rowspan=13,columnspan=3)
             self.hariai_in_game.set(False)
@@ -575,21 +619,21 @@ class Application(tkinter.Frame):
         if type == "bg":
          image=Image.open('gui_assets/bg.png')
          image_ui = ImageTk.PhotoImage(image)
-         self.tag_image_bg = tkinter.Label(parent,image=image_ui)
+         self.tag_image_bg = tkinter.Label(self.frame,image=image_ui)
          self.tag_image_bg.image = image_ui
          self.tag_image_bg.grid(column=7, row=4,sticky="W",pady = 2,rowspan=13,columnspan=2)
          widget.delete(0,"end")
         elif type == "banner":
          image=Image.open('gui_assets/banner.png')
          image_ui = ImageTk.PhotoImage(image)
-         self.tag_image_banner=tkinter.Label(parent,image=image_ui)
+         self.tag_image_banner=tkinter.Label(self.frame,image=image_ui)
          self.tag_image_banner.image = image_ui
          self.tag_image_banner.grid(column=6, row=0,sticky="W",pady = 2,rowspan=4,columnspan=3)
          widget.delete(0,"end")
         elif type == "hariai":
          image=Image.open('gui_assets/hariai.png')
          image_ui = ImageTk.PhotoImage(image)
-         self.tag_image_hariai=tkinter.Label(parent,image=image_ui)
+         self.tag_image_hariai=tkinter.Label(self.frame,image=image_ui)
          self.tag_image_hariai.image = image_ui
          self.tag_image_hariai.grid(column=4, row=5,sticky="W",pady = 2,rowspan=13,columnspan=3)
          widget.delete(0,"end")
