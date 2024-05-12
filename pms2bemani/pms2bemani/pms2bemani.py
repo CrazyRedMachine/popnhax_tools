@@ -752,6 +752,7 @@ if __name__ == "__main__":
 
     for difficulty in difficulties:
         parser.add_argument('--input-%s' % difficulty, help='Input file (%s)' % difficulty.upper(), default=None)
+        parser.add_argument('--lvl-%s' % difficulty, help='level difficulty (%s)' % difficulty.upper(), default=None, type=int)
 
     #Display required arguments on help
     requiredNamed = parser.add_argument_group('required arguments')
@@ -765,6 +766,7 @@ if __name__ == "__main__":
     requiredNamed.add_argument('--banner', help='Banner image (must be 244x58)', default=None, required=True)
     parser.add_argument('--bg', help='Background image (must be 128x256)', default=None, required=False)
     parser.add_argument('--hariai', help='Hariai image (must be 250x322 or 382x502)', default=None)
+    parser.add_argument('--metadata-hariai-in-game', help='hariai already is in game files', default=False, action='store_true')
     parser.add_argument('--metadata-fw-title', help='Fullwidth music title for database', default=None)
     parser.add_argument('--metadata-fw-artist', help='Fullwidth music artist for database', default=None)
     parser.add_argument('--metadata-fw-genre', help='Fullwidth music genre for database', default=None)
@@ -824,7 +826,10 @@ if __name__ == "__main__":
             )
 
             args.new = True  # In case the song has long notes and the user forgot to set the new flag, upgrade it automatically
-
+        
+        # Chart level
+        level = args_vars['lvl_%s' % difficulty]
+        level = level if level != None else 1
         chart = E.chart(
             E.folder("custom", __type="str"),
             E.filename(args.name, __type="str"),
@@ -834,7 +839,7 @@ if __name__ == "__main__":
             E.audio_param4("0", __type="s32"),
             E.file_type("0", __type="u32"),
             E.used_keys("0", __type="u16"),
-            E.diff("1", __type="u8"),
+            E.diff(str(level), __type="u8"),
             E.hold_flag("1" if has_hold_notes else "0", __type="u8"),
             idx=str(difficulty),
             *optional
@@ -894,14 +899,20 @@ if __name__ == "__main__":
         # Create banner folder
         tex_files['kc_diff_ifs'] = create_banner(output_path, args.musicid, args.banner)
 
+    hariai = ""
     if args.hariai:
-        # Create hariai folder
-        tex_files['ha_merge_ifs'] = create_hariai(output_path, args.musicid, args.hariai)
+        # If hariai is on game files, dont need to create again
+        if args.metadata_hariai_in_game:
+            hariai = args.hariai
+        else: # Create hariai folder
+            tex_files['ha_merge_ifs'] = create_hariai(output_path, args.musicid, args.hariai)
+            hariai = tex_files['ha_merge_ifs']
         mask |= 0x00800000  # Required for songs that show a hariai image on the music selection screen
 
     if args.bg:
         # Create background folder
         tex_files['bg_diff_ifs'] = create_bg(output_path, args.musicid, args.bg)
+        mask |= 0x00000100  # Required for songs that shows a background
 
     if args.metadata_hariai_is_jacket:
         mask |= 0x00000020  # The alternate hariai image (set by using 0x800000) is a song jacket instead of a character portrait
@@ -920,7 +931,7 @@ if __name__ == "__main__":
         E.cs_version(str(args.metadata_cs_version), __type="u32"),
         E.categories(str(args.metadata_categories), __type="u32"),
         E.charts(*charts_xml),
-        E.ha(tex_files.get('ha_merge_ifs', ""), __type="str"),
+        E.ha(hariai, __type="str"),
         E.chara_x(str(args.metadata_chara_x), __type="u32"),
         E.chara_y(str(args.metadata_chara_y), __type="u32"),
         E.unk1("0 0 0 0 0 0 36 0 0 59 77 0 0 0 0 134 0 0 68 67 222 0 0 0 0 0 0 0 0 0 0 0", __type="u16", __count="32"),

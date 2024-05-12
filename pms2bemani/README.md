@@ -20,6 +20,11 @@ optional arguments:
   --input-np INPUT_NP   Input file (NP)
   --input-hp INPUT_HP   Input file (HP)
   --input-op INPUT_OP   Input file (OP)
+  --lvl-bp   LVL_BP     Chart level (BP)
+  --lvl-ep   LVL_EP     Chart level (EP)
+  --lvl-np   LVL_NP     Chart level (NP)
+  --lvl-hp   LVL_HP     Chart level (HP)
+  --lvl-op   LVL_OP     Chart level (OP)
   --output OUTPUT       Output folder
   --preview PREVIEW     Input preview file (overrides preview generation code)
   --new                 New chart format which supports hold notes

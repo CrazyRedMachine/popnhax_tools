@@ -2,18 +2,27 @@ import tkinter
 from tkinter import *
 import json
 import os
+import pygame
 import jaconv
 import subprocess
 import re
+import cutlet
+import platform
+import threading
+import time
 from tkinter import filedialog as fd
 from tkinter import messagebox
 from tkinter.messagebox import showinfo,askyesno
 from PIL import  ImageTk,ImageDraw,Image
 
+on_wsl = "microsoft" in platform.uname()[3].lower()
+
 class Application(tkinter.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.current_file = ''
+        # Initialize pygame mixer
+        pygame.mixer.init()
         #load translation
         translation_file = open('gui_assets/gui_translation.json')
         translation_data = json.load(translation_file)
@@ -28,9 +37,31 @@ class Application(tkinter.Frame):
         #load category data
         self.l = self.chara_txt_to_data()
 
+        # Get screen dimensions
+        screen_width = parent.winfo_screenwidth()
+        screen_height = parent.winfo_screenheight()
+
+        # Get desired siexe
+        window_width = int(screen_width * 0.4)
+        window_height = int(screen_height * 0.8)
+
+        # Window spawn pos
+        x_position = (screen_width - window_width) // 2
+        y_position = (screen_height - window_height) // 2
+
+        parent.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+        # Create canvas as a widget container
+        self.canvas = tkinter.Canvas(parent)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+
+        # Create Frame in canvas
+        self.frame = tkinter.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
+
         #grids
         for i in range(38):
-          parent.columnconfigure(i, weight=10)
+          self.frame.columnconfigure(i, weight=10)
  
         #load masks
         mask_file = open('gui_assets/metadata.json')
@@ -65,7 +96,7 @@ class Application(tkinter.Frame):
         self.has_battle_var = BooleanVar()
         self.is_jacket_var = BooleanVar()
         self.new_chart_format = BooleanVar()
-
+        self.hariai_in_game = BooleanVar()
         # first menu
         self.menu_bar= tkinter.Menu(parent)
         self.menu_file = tkinter.Menu(self.menu_bar, tearoff=False)
@@ -79,7 +110,29 @@ class Application(tkinter.Frame):
         self.menu_bar.add_cascade(label=self.tr["Options"],command=lambda:self.options(parent))
         parent.config(menu=self.menu_bar)
         #create window widgets
-        self.create_widgets(parent)
+        self.create_widgets(self.frame)
+
+        # Vertical scrollbar
+        scrollbar_y = tkinter.Scrollbar(parent, orient=tkinter.VERTICAL, command=self.canvas.yview)
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+
+        # Horizontal scrollbar
+        scrollbar_x = tkinter.Scrollbar(parent, orient=tkinter.HORIZONTAL, command=self.canvas.xview)
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
+
+        # Add scrollbar in canvas
+        self.canvas.config(yscrollcommand=scrollbar_y.set, xscrollcommand=scrollbar_x.set)
+
+        # Expand frame
+        parent.grid_rowconfigure(0, weight=1)
+        parent.grid_columnconfigure(0, weight=1)
+
+        # Canvas move event
+        self.frame.bind("<Configure>", self.on_frame_configure)
+
+    def on_frame_configure(self, event):
+        # Update canvas size
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
     def create_widgets(self,parent):
@@ -106,9 +159,29 @@ class Application(tkinter.Frame):
         self.find_keysounds.grid(column=2, row=3,sticky="W")
 
  
+        # Create the list of pop'n music levels
+        self.levels = []
+        [self.levels.append(x+1) for x in range(50)]
+        # Variable to keep track of the option
+        # selected in OptionMenu
+        self.value_inside_bp_lv = tkinter.StringVar(parent)
+        self.value_inside_ep_lv = tkinter.StringVar(parent)
+        self.value_inside_np_lv = tkinter.StringVar(parent)
+        self.value_inside_hp_lv = tkinter.StringVar(parent)
+        self.value_inside_op_lv = tkinter.StringVar(parent)
+        # Set the default value of the variable
+        self.value_inside_bp_lv.set("1")
+        self.value_inside_ep_lv.set("1")
+        self.value_inside_np_lv.set("1")
+        self.value_inside_hp_lv.set("1")
+        self.value_inside_op_lv.set("1")
+
+
         #Charts title
         self.tag_charts_title = tkinter.Label(parent, text=self.tr["Charts"])
         self.tag_charts_title.grid(column=0, row=5,pady = 2,sticky='ew')
+        self.tag_charts_title = tkinter.Label(parent, text=self.tr["Level"])
+        self.tag_charts_title.grid(column=3, row=5,pady = 2,sticky='ew')
         #battle mode stuff
         self.tag_input_bp = tkinter.Label(parent, text=self.tr["Battle Mode File"])
         self.tag_input_bp.grid(column=0, row=6,sticky="W",pady = 2)
@@ -116,13 +189,19 @@ class Application(tkinter.Frame):
         self.box_input_bp.grid(column=1, row=6,sticky='ew')
         self.find_input_bp = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_bp))
         self.find_input_bp.grid(column=2, row=6,sticky="W")
+        #battle mode level objects
+        self.question_menu_bp_lv = tkinter.OptionMenu(parent, self.value_inside_bp_lv, *self.levels)
+        self.question_menu_bp_lv.grid(column=3, row=6,sticky="EW")
         #Easy difficulty
         self.tag_input_ep = tkinter.Label(parent, text=self.tr["Easy Chart File"])
         self.tag_input_ep.grid(column=0, row=7,sticky="W",pady = 2)
         self.box_input_ep = tkinter.Entry(parent)
         self.box_input_ep.grid(column=1, row=7,sticky='ew')
         self.find_input_ep = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_ep))
-        self.find_input_ep.grid(column=2, row=7,sticky="W")
+        self.find_input_ep.grid(column=2, row=7,sticky="W")        
+        #Easy difficulty level objects
+        self.question_menu_ep_lv = tkinter.OptionMenu(parent, self.value_inside_ep_lv, *self.levels)
+        self.question_menu_ep_lv.grid(column=3, row=7,sticky="EW")
         #Normal difficulty
         self.tag_input_np = tkinter.Label(parent, text=self.tr["Normal Chart File"])
         self.tag_input_np.grid(column=0, row=8,sticky="W",pady = 2)
@@ -130,6 +209,9 @@ class Application(tkinter.Frame):
         self.box_input_np.grid(column=1, row=8,sticky='ew')
         self.find_input_np = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_np))
         self.find_input_np.grid(column=2, row=8,sticky="W")
+        #Normal difficulty level objects
+        self.question_menu_np_lv = tkinter.OptionMenu(parent, self.value_inside_np_lv, *self.levels)
+        self.question_menu_np_lv.grid(column=3, row=8,sticky="EW")
         #Hyper difficulty
         self.tag_input_hp = tkinter.Label(parent, text=self.tr["Hyper Chart File"])
         self.tag_input_hp.grid(column=0, row=9,sticky="W",pady = 2)
@@ -137,6 +219,9 @@ class Application(tkinter.Frame):
         self.box_input_hp.grid(column=1, row=9,sticky='ew')
         self.find_input_hp = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_hp))
         self.find_input_hp.grid(column=2, row=9,sticky="W")
+        #Hyper difficulty level objects
+        self.question_menu_hp_lv = tkinter.OptionMenu(parent, self.value_inside_hp_lv, *self.levels)
+        self.question_menu_hp_lv.grid(column=3, row=9,sticky="EW")
         #Ex difficulty
         self.tag_input_op = tkinter.Label(parent, text=self.tr["Ex Chart File"])
         self.tag_input_op.grid(column=0, row=10,sticky="W",pady = 2)
@@ -144,6 +229,9 @@ class Application(tkinter.Frame):
         self.box_input_op.grid(column=1, row=10,sticky='ew')
         self.find_input_op = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_pms(self.box_input_op))
         self.find_input_op.grid(column=2, row=10,sticky="W")
+        #Ex difficulty level objects
+        self.question_menu_op_lv = tkinter.OptionMenu(parent, self.value_inside_op_lv, *self.levels)
+        self.question_menu_op_lv.grid(column=3, row=10,sticky="EW")
         #Metadata
         self.tag_metadata = tkinter.Label(parent, text=self.tr["Metadata"])
         self.tag_metadata.grid(column=0, row=11,pady = 2,sticky='ew')
@@ -188,14 +276,14 @@ class Application(tkinter.Frame):
         self.tag_chara_1.grid(column=0, row=18,sticky="W",pady = 2)
         self.box_chara_1 = tkinter.Entry(parent)
         self.box_chara_1.grid(column=1, row=18,sticky='ew')
-        self.sel_chara_1 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_1))
+        self.sel_chara_1 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_1,0))
         self.sel_chara_1.grid(column=2, row=18,sticky="W")
         #Chara 2
         self.tag_chara_2 = tkinter.Label(parent, text=self.tr["Chara 2"])
         self.tag_chara_2.grid(column=0, row=19,sticky="W",pady = 2)
         self.box_chara_2 = tkinter.Entry(parent)
         self.box_chara_2.grid(column=1, row=19,sticky='ew')
-        self.sel_chara_2 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_2))
+        self.sel_chara_2 = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_chara_2,0))
         self.sel_chara_2.grid(column=2, row=19,sticky="W")
         #Has battle hyper
         self.tag_battle_hyper = tkinter.Label(parent, text=self.tr["Has battle hyper"])
@@ -264,12 +352,12 @@ class Application(tkinter.Frame):
         #Chara X
         self.tag_chara_position_x = tkinter.Label(parent, text=self.tr["Chara position X"])
         self.tag_chara_position_x.grid(column=0, row=26,sticky="W",pady = 2)
-        self.box_chara_position_x = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_chara_position_x = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_chara_position_x.grid(column=1, row=26)
         #Chara Y
         self.tag_chara_position_y = tkinter.Label(parent, text=self.tr["Chara position Y"])
         self.tag_chara_position_y.grid(column=0, row=27,sticky="W",pady = 2)
-        self.box_chara_position_y = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_chara_position_y = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_chara_position_y.grid(column=1, row=27)
 
         #Preview
@@ -284,16 +372,20 @@ class Application(tkinter.Frame):
         self.find_preview_file = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_file_sound(self.box_preview_file))
         self.find_preview_file.grid(column=2, row=29,sticky="W")
 
+        # Sound Player window
+        self.open_sound_button = tkinter.Button(parent, text=self.tr["Player"], command=lambda:self.open_sound_player(parent))
+        self.open_sound_button.grid(column=3,row=29,sticky="W")
+
         #Preview offset
         self.tag_preview_offset = tkinter.Label(parent, text=self.tr["Preview offset"])
         self.tag_preview_offset.grid(column=0, row=30,sticky="W",pady = 2)
-        self.box_preview_offset = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_preview_offset = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_preview_offset.grid(column=1, row=30)
 
         #Preview duration
         self.tag_preview_duration = tkinter.Label(parent, text=self.tr["Preview duration"])
         self.tag_preview_duration.grid(column=0, row=31,sticky="W",pady = 2)
-        self.box_preview_duration = tkinter.Spinbox(from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
+        self.box_preview_duration = tkinter.Spinbox(parent,from_=0,to=2000,increment=1,validate='all', validatecommand=(vcmd, '%P'))
         self.box_preview_duration.grid(column=1, row=31)
 
         #Extra
@@ -337,19 +429,27 @@ class Application(tkinter.Frame):
         self.find_hariai.grid(column=7, row=25,sticky="W")
         self.clean_hariai = tkinter.Button(parent,text=self.tr["Clean"],command=lambda: self.clean_image(parent,"hariai",self.box_hariai))
         self.clean_hariai.grid(column=8, row=25,sticky="w",columnspan=1)
+        #Hariai from game
+        self.tag_game_hariai = tkinter.Label(parent, text=self.tr["From game files"])
+        self.tag_game_hariai.grid(column=5, row=26,sticky="W",pady = 2)
+        self.check_game_hariai = tkinter.Checkbutton(parent,onvalue=True, offvalue=False,variable=self.hariai_in_game)
+        self.check_game_hariai.grid(column=6, row=26,sticky='ew')
+        self.game_hariai = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.chara_selection(parent,self.box_hariai,2))
+        self.game_hariai.grid(column=7, row=26,sticky="w",columnspan=1)
+ 
 
 
         #Output folder
         self.tag_output = tkinter.Label(parent, text=self.tr["Output folder"])
-        self.tag_output.grid(column=5, row=26,sticky="W",pady = 2)
+        self.tag_output.grid(column=5, row=27,sticky="W",pady = 2)
         self.box_output= tkinter.Entry(parent)
-        self.box_output.grid(column=6, row=26,sticky='ew')
+        self.box_output.grid(column=6, row=27,sticky='ew')
         self.find_output = tkinter.Button(parent,text=self.tr["Open"],command=lambda: self.select_directory(self.box_output))
-        self.find_output.grid(column=7, row=26,sticky="W")
+        self.find_output.grid(column=7, row=27,sticky="W")
 
         #Create Mod
         self.create_mod = tkinter.Button(parent,text=self.tr["Create Mod"],command=lambda:self.generate_mod())
-        self.create_mod.grid(column=6, row=28,sticky="EW")
+        self.create_mod.grid(column=6, row=29,sticky="EW")
 
         #Banner display
         self.tag_image_banner=tkinter.Label(parent, text=self.tr["Banner"])
@@ -366,6 +466,115 @@ class Application(tkinter.Frame):
         self.tag_image_hariai = tkinter.Label(parent, text=self.tr["Hariai"])
         self.tag_image_hariai.grid(column=6, row=4,sticky="W",pady = 3)
         self.clean_image(parent,"hariai",self.box_hariai)
+
+    def open_sound_player(self,parent):
+        # Toplevel object which will
+        # be treated as a new window
+        ctWin = Toplevel(parent)
+        # sets the title of the
+        # Toplevel widget
+        ctWin.title(self.tr["Sound Player"])
+        ctWin.geometry("400x200")
+        ctWin.protocol("WM_DELETE_WINDOW", lambda: self.stop_player(ctWin))
+        source_mgs_txt = self.tr["Source"]
+        # Check if using custom preview
+        custom = False
+        if self.box_preview_file.get().strip():
+            source_txt = self.tr["Custom Preview"]
+            custom = True
+            render_filename = self.box_preview_file.get()
+        else:
+            source_txt = self.tr["Pms files"]
+            pms_files = [
+                self.box_input_bp.get(),
+                self.box_input_ep.get(),
+                self.box_input_np.get(),
+                self.box_input_hp.get(),
+                self.box_input_op.get(),
+                ]
+            pms_to_preview = ""
+            for file in pms_files:
+                if file and os.path.isfile(file):
+                    pms_to_preview = file
+                    break
+            # If already exist, no need to generate again
+            render_filename = os.path.join("tmp", "%s_full.wav" % self.box_name.get())
+
+            if os.path.isfile(render_filename) == False:
+                self.generate_preview(pms_to_preview,render_filename)
+
+            # Get Preview offset and Preview duration values
+            preview_offset = self.box_preview_offset.get()
+            preview_duration = self.box_preview_duration.get()
+    
+            offset_txt = self.tr["Preview offset"]
+            duration_txt = self.tr["Preview duration"]
+            tkinter.Label(ctWin, text=f"{offset_txt}: {preview_offset}").grid(row=2, column=0, padx=5, pady=5, sticky="w")
+            tkinter.Label(ctWin, text=f"{duration_txt}: {preview_duration}").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+    
+        tkinter.Label(ctWin, text=f"{source_mgs_txt}: {source_txt}").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+
+        # Sounds Managment buttons
+        self.play_button = tkinter.Button(ctWin, text=self.tr["Play"], command=lambda:self.play_sound(custom,render_filename))
+        self.play_button.grid(row=4, column=0, padx=5, pady=5)
+        self.stop_button = tkinter.Button(ctWin, text=self.tr["Stop"], command=self.stop_sound)
+        self.stop_button.grid(row=4, column=1, padx=5, pady=5)
+        if custom == False:
+            self.stop_button = tkinter.Button(ctWin, text=self.tr["Recreate Preview"], command=lambda:self.regenerate_preview(pms_to_preview,render_filename))
+            self.stop_button.grid(row=4, column=2, padx=5, pady=5)   
+
+    def play_sound(self,custom,file_path):
+
+        if custom:
+            start = 0
+        else:
+            start = int(self.box_preview_offset.get())
+            end = int(self.box_preview_duration.get())
+
+        if file_path and os.path.isfile(file_path):
+            # Load Music
+            pygame.mixer.music.load(file_path)
+            pygame.mixer.music.play(start=start)
+
+            if (custom == False) and (end >= 1):
+                stop_thread = threading.Thread(target=self.stop_music_after, args=(end,)).start()
+
+
+    def stop_music_after(self,seconds):
+        time.sleep(seconds)
+        pygame.mixer.music.stop()
+        
+    def stop_sound(self):
+        pygame.mixer.music.stop()
+
+    def stop_player(self,parent):
+        pygame.mixer.music.stop()
+        parent.destroy()
+
+    def generate_render(self,input_filename, output_filename):
+
+        if not os.path.exists("bmx2wavc.exe"):
+                tkinter.messagebox.showerror(title=self.tr["Error"], message=self.tr["bmx2wavc error"])
+
+    
+        if on_wsl:
+            os.system("""./bmx2wavc.exe "%s" "%s" """ % (input_filename, output_filename))
+    
+        else:
+            os.system("""bmx2wavc.exe "%s" "%s" """ % (input_filename, output_filename))
+
+    def regenerate_preview(self,input_filename, output_filename):
+        self.generate_preview(input_filename, output_filename)
+        pygame.mixer.init()
+        pygame.mixer.music.load(output_filename)
+
+    def generate_preview(self,input_filename, output_filename):
+        # Delete if exists
+        if os.path.exists(output_filename):
+            pygame.mixer.quit()
+            os.remove(output_filename)
+        messagebox.showinfo(title=self.tr["Preview"],message=self.tr["Gen preview"])
+        self.generate_render(input_filename, output_filename)
 
 
     def box_to_param(self,param,widget):
@@ -420,7 +629,13 @@ class Application(tkinter.Frame):
       self.box_to_param("--metadata-chara2",self.box_chara_2)
       self.bool_to_param("--metadata-has-battle-hyper",self.has_battle_var)
       self.bool_to_param("--metadata-hariai-is-jacket",self.is_jacket_var)
+      self.bool_to_param("--metadata-hariai-in-game",self.hariai_in_game)
       self.box_to_param("--metadata-folder",self.value_inside_folder)
+      self.box_to_param("--lvl-bp",self.value_inside_bp_lv)
+      self.box_to_param("--lvl-ep",self.value_inside_ep_lv)
+      self.box_to_param("--lvl-np",self.value_inside_np_lv)
+      self.box_to_param("--lvl-hp",self.value_inside_hp_lv)
+      self.box_to_param("--lvl-op",self.value_inside_op_lv)
       self.bitfields_to_param("--metadata-categories",self.vars_category)
       self.box_to_param("--metadata-cs-version",self.value_inside_cs)
       self.bitfields_to_param("--metadata-mask",self.vars_mask)
@@ -498,20 +713,21 @@ class Application(tkinter.Frame):
          banner = ImageTk.PhotoImage(my_image)
  
          if type == "banner" and my_image.size == (244,58):
-          self.tag_image_banner = tkinter.Label(parent,image=banner)
+          self.tag_image_banner = tkinter.Label(self.frame,image=banner)
           self.tag_image_banner.image = banner
           self.tag_image_banner.grid(column=6, row=0,sticky="W",pady = 2,rowspan=4,columnspan=3)
          elif type == "bg" and my_image.size == (128, 256):
-          self.tag_image_bg = tkinter.Label(parent,image=banner)
+          self.tag_image_bg = tkinter.Label(self.frame,image=banner)
           self.tag_image_bg.image = banner
           self.tag_image_bg.grid(column=7, row=4,sticky="W",pady = 2,rowspan=13,columnspan=2)
          elif type == "hariai" and ((my_image.size == (250, 322)) or (my_image.size == (382, 502))):
             if((my_image.size == (382, 502))):
               my_image = my_image.resize((250, 322))
             banner = ImageTk.PhotoImage(my_image)
-            self.tag_image_hariai = tkinter.Label(parent,image=banner)
+            self.tag_image_hariai = tkinter.Label(self.frame,image=banner)
             self.tag_image_hariai.image = banner
             self.tag_image_hariai.grid(column=4, row=5,sticky="W",pady = 2,rowspan=13,columnspan=3)
+            self.hariai_in_game.set(False)
          else:
             tkinter.messagebox.showerror(title="Error", message=self.tr["Image error"])
             return 0
@@ -524,21 +740,21 @@ class Application(tkinter.Frame):
         if type == "bg":
          image=Image.open('gui_assets/bg.png')
          image_ui = ImageTk.PhotoImage(image)
-         self.tag_image_bg = tkinter.Label(parent,image=image_ui)
+         self.tag_image_bg = tkinter.Label(self.frame,image=image_ui)
          self.tag_image_bg.image = image_ui
          self.tag_image_bg.grid(column=7, row=4,sticky="W",pady = 2,rowspan=13,columnspan=2)
          widget.delete(0,"end")
         elif type == "banner":
          image=Image.open('gui_assets/banner.png')
          image_ui = ImageTk.PhotoImage(image)
-         self.tag_image_banner=tkinter.Label(parent,image=image_ui)
+         self.tag_image_banner=tkinter.Label(self.frame,image=image_ui)
          self.tag_image_banner.image = image_ui
          self.tag_image_banner.grid(column=6, row=0,sticky="W",pady = 2,rowspan=4,columnspan=3)
          widget.delete(0,"end")
         elif type == "hariai":
          image=Image.open('gui_assets/hariai.png')
          image_ui = ImageTk.PhotoImage(image)
-         self.tag_image_hariai=tkinter.Label(parent,image=image_ui)
+         self.tag_image_hariai=tkinter.Label(self.frame,image=image_ui)
          self.tag_image_hariai.image = image_ui
          self.tag_image_hariai.grid(column=4, row=5,sticky="W",pady = 2,rowspan=13,columnspan=3)
          widget.delete(0,"end")
@@ -661,6 +877,11 @@ class Application(tkinter.Frame):
       data["Has battle hyper"]=self.has_battle_var.get()
       data["Hariai is jacket"]=self.is_jacket_var.get()
       data["Folder"]=self.value_inside_folder.get()
+      data["Lvl bp"]=self.value_inside_bp_lv.get()
+      data["Lvl ep"]=self.value_inside_ep_lv.get()
+      data["Lvl np"]=self.value_inside_np_lv.get()
+      data["Lvl hp"]=self.value_inside_hp_lv.get()
+      data["Lvl op"]=self.value_inside_op_lv.get()
 
       category_data = {}
       for label, value in zip(self.category_des, self.vars_category):
@@ -682,9 +903,30 @@ class Application(tkinter.Frame):
       data["New chart format"]=self.new_chart_format.get()
       data["Background"]=self.box_background.get()
       data["Hariai"]=self.box_hariai.get()
+      data["Hariai in game"]=self.hariai_in_game.get()
       data["Output folder"]=self.box_output.get()
 
       return(json.dumps(data))
+    
+
+    def set_val(self, data, name: str, default: str = "") -> str:
+        val = data.get(name)
+        
+        if val is None:
+            return default
+        if type(val)  != str:
+            return default
+        return val
+    
+    def set_bool(self, data, name: str, default: bool = False) -> bool:
+        val = data.get(name)
+        
+        if val is None:
+            return default
+        if type(val)  != bool:
+            return default
+        return val
+
 
     def p2b_to_fields(self,data,parent):
 
@@ -708,6 +950,11 @@ class Application(tkinter.Frame):
       self.has_battle_var.set(data["Has battle hyper"])
       self.is_jacket_var.set(data["Hariai is jacket"])
       self.value_inside_folder.set(data["Folder"])
+      self.value_inside_bp_lv.set(self.set_val(data,"Lvl bp","1"))
+      self.value_inside_ep_lv.set(self.set_val(data,"Lvl ep","1"))
+      self.value_inside_np_lv.set(self.set_val(data,"Lvl np","1"))
+      self.value_inside_hp_lv.set(self.set_val(data,"Lvl hp","1"))
+      self.value_inside_op_lv.set(self.set_val(data,"Lvl op","1"))
       
       for label, value in zip(self.category_des, self.vars_category):
           value.set(data["Categories"][label])
@@ -737,8 +984,17 @@ class Application(tkinter.Frame):
         self.insert_image(parent,data["Banner"],self.box_banner,"banner")
       if(data["Background"]!=''):
         self.insert_image(parent,data["Background"],self.box_background,"bg")
+
+      hariai_is_in_game = self.set_bool(data,"Hariai in game")
+      self.hariai_in_game.set(hariai_is_in_game)
       if(data["Hariai"]!=''):
-        self.insert_image(parent,data["Hariai"],self.box_hariai,"hariai")
+        if hariai_is_in_game == False:
+            self.insert_image(parent,data["Hariai"],self.box_hariai,"hariai")
+        else:
+            self.box_hariai.delete(0,"end")
+            self.box_hariai.insert(0,data["Hariai"])
+
+
       self.menu_file.entryconfig(2, state=ACTIVE)
 
     def new_fields(self,parent):
@@ -763,6 +1019,11 @@ class Application(tkinter.Frame):
       self.has_battle_var.set(False)
       self.is_jacket_var.set(False)
       self.value_inside_folder.set(None)
+      self.value_inside_bp_lv.set(1)
+      self.value_inside_ep_lv.set(1)
+      self.value_inside_np_lv.set(1)
+      self.value_inside_hp_lv.set(1)
+      self.value_inside_op_lv.set(1)
       
       for label, value in zip(self.category_des, self.vars_category):
           value.set(0)
@@ -781,6 +1042,7 @@ class Application(tkinter.Frame):
       self.new_chart_format.set(False)
       self.replace_value(self.box_background,"")
       self.replace_value(self.box_hariai,"")
+      self.hariai_in_game.set(False)
       self.replace_value(self.box_output,"")
 
       #clean images
@@ -867,7 +1129,7 @@ class Application(tkinter.Frame):
       elif save == False:
           parent.destroy()
 
-    def chara_selection(self,parent,widget):
+    def chara_selection(self,parent,widget,pos):
         # Toplevel object which will
         # be treated as a new window
         ctWin = Toplevel(parent)
@@ -877,25 +1139,47 @@ class Application(tkinter.Frame):
         ctWin.geometry("200x200")
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_columnconfigure(3, weight=0)
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=0)        
+        self.grid_rowconfigure(2, weight=0)  
+        self.grid_rowconfigure(3, weight=0)  
 
         #creating text box 
         e = Entry(ctWin)
         e.pack(side='top', fill='x', expand=True)
         e.bind('<KeyRelease>', self.checkkey)
+
+        #buttons
+        btn_romaji = Button(ctWin,text="romaji",command=lambda: self.list_to_romaji())
+        btn_romaji.pack()
+        btn_katakana = Button(ctWin,text="katakana",command=lambda: self.list_to_katakana())
+        btn_katakana.pack()
           
         #creating list box
         self.lb = Listbox(ctWin)
         self.lb.pack(side='top', fill='x', expand=True)
-        self.lb.bind('<<ListboxSelect>>', lambda eff: self.onselect(eff,widget))
+        self.lb.bind('<<ListboxSelect>>', lambda eff: self.onselect(eff,widget,pos))
         self.update(self.l)
         
            
         ctWin.transient(parent)
         ctWin.grab_set()
         parent.wait_window(ctWin)
+    
+    def list_to_romaji(self):
+        new_list = []
+        katsu = cutlet.Cutlet()
+        for line in self.l:
+            new_list.append([line[0],katsu.romaji(line[1]),line[2]])
+        self.l = new_list 
+        self.update(self.l)
 
+    def list_to_katakana(self):
+        self.l=self.chara_txt_to_data()
+        self.update(self.l)
+    
     # Function for checking the
     # key pressed and updating
     # the listbox
@@ -909,7 +1193,7 @@ class Application(tkinter.Frame):
         else:
             data = []
             for item in self.l:
-                if value.lower() in item.lower():
+                if value.lower() in ''.join(str(x) for x in item).lower():
                     data.append(item)                
        
         # update data in listbox
@@ -924,12 +1208,15 @@ class Application(tkinter.Frame):
         for item in data:
             self.lb.insert('end', item)
 
-    def onselect(self,event,widget):
+    def onselect(self,event,widget,pos):
         # Note here that Tkinter passes an event object to onselect()
         w = event.widget
         index = int(w.curselection()[0])
         value = w.get(index)
-        self.replace_value(widget,value)
+        self.replace_value(widget,value[pos])
+        # Hariai in game
+        if pos == 2:
+            self.hariai_in_game.set(True)
 
     def chara_txt_to_data(self):
         # Using readlines()
@@ -938,7 +1225,10 @@ class Application(tkinter.Frame):
         charas = []
         # Strips the newline character
         for line in Lines:
-            charas.append(line.split(',')[0].replace("'",'').strip())
+            chara_anim = line.split(',')[0].replace("'",'').strip()
+            ha = line.split(',')[15].replace("'",'').strip()
+            chara_name = line.split(',')[10].replace("'",'').strip()
+            charas.append([chara_anim,chara_name,ha])
         return charas
 
     
