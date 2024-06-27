@@ -73,7 +73,8 @@ Example: `python3 verify_data.py --input-dll popn22.dll --input-xml db/patches_2
 
 ## (DEPRECATED) ida_find_addrs.py
 
-** THIS SCRIPT IS DEPRECATED AND PROBABLY WON'T BE UPDATED ANYMORE. PLEASE USE POPNHAX V2.1 OR ABOVE INSTEAD **
+**THIS SCRIPT IS DEPRECATED AND PROBABLY WON'T BE UPDATED ANYMORE. PLEASE USE POPNHAX V2.1 OR ABOVE INSTEAD**
+
 IDA script tested in 6.6 and 7.x.
 Creates a map file based on the opened DLL file.
 The output file is not guaranteed to work but it should be about 95% right.
