@@ -19,24 +19,11 @@ Usage:
 
 This will restore the initial state.
 
-## ida_find_addrs.py
-
-IDA script tested in 6.6 and 7.x.
-Creates a map file based on the opened DLL file.
-The output file is not guaranteed to work but it should be about 95% right.
-If the game crashes when you use a newly generated XML file, diff with a known good/working XML file to figure out what patches don't look right and remove them.
-
-Usage:
-1. Load popn22.dll in IDA Pro
-2. Wait until IDA finishes analyzing the entire DLL
-3. File > Script file... > select ida_find_addrs.py
-4. Copy output XML file from IDA's output window (by default it will be docked to the bottom of the screen)
-
 
 ## db_dump.py
 
 Dump the full database information from the specified DLL using the input XML mapping information.
-You can obtain the XML maps by using ida_find_addrs.py.
+You can obtain the XML maps by using popnhax v2.1 or above and enable `<patch_xml_dump>` option.
 
 Usage:
 ```bash
@@ -82,6 +69,22 @@ optional arguments:
 ```
 
 Example: `python3 verify_data.py --input-dll popn22.dll --input-xml db/patches_2018082100.xml --input-data data --input-db db`
+
+
+## (DEPRECATED) ida_find_addrs.py
+
+** THIS SCRIPT IS DEPRECATED AND PROBABLY WON'T BE UPDATED ANYMORE. PLEASE USE POPNHAX V2.1 OR ABOVE INSTEAD **
+IDA script tested in 6.6 and 7.x.
+Creates a map file based on the opened DLL file.
+The output file is not guaranteed to work but it should be about 95% right.
+If the game crashes when you use a newly generated XML file, diff with a known good/working XML file to figure out what patches don't look right and remove them.
+
+Usage:
+1. Load popn22.dll in IDA Pro
+2. Wait until IDA finishes analyzing the entire DLL
+3. File > Script file... > select ida_find_addrs.py
+4. Copy output XML file from IDA's output window (by default it will be docked to the bottom of the screen)
+
 
 # Other Important Notes
 
