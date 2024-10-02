@@ -117,22 +117,23 @@ These fields are used to sort, therefore DO NOT USE HIRAGANA OR KANJI else your 
 - `folder` is the game version number.
 - `cs_version` is the game version number for CS versioning.
 - `categories` is a bitfield for categories
-  - 0x0001: beatmania
-  - 0x0002: IIDX
-  - 0x0004: DDR
-  - 0x0008: Gitadora
-  - 0x0010: Mambo a Go Go
-  - 0x0020: pop'n stage
-  - 0x0040: Keyboarmania
-  - 0x0080: Dance Maniax
-  - 0x0100: bmIII
-  - 0x0200: Toy's March
-  - 0x0400: ee'mall (only ee'mall originals have this set)
-  - 0x0800: jubeat
-  - 0x1000: Reflec Beat
-  - 0x2000: SDVX
-  - 0x4000: BeatStream
-  - 0x8000: Nostalgia
+  - 0x00001: beatmania
+  - 0x00002: IIDX
+  - 0x00004: DDR
+  - 0x00008: Gitadora
+  - 0x00010: Mambo a Go Go
+  - 0x00020: pop'n stage
+  - 0x00040: Keyboarmania
+  - 0x00080: Dance Maniax
+  - 0x00100: bmIII
+  - 0x00200: Toy's March
+  - 0x00400: ee'mall (only ee'mall originals have this set)
+  - 0x00800: jubeat
+  - 0x01000: Reflec Beat
+  - 0x02000: SDVX
+  - 0x04000: BeatStream
+  - 0x08000: Museca
+  - 0x10000: Nostalgia
 - `ha` is the hariai image. For example, songs that display jackets use the hariai image with a specific bit in the `mask` set. to display the jacket on the music select screen.
 - `chara_x` and `chara_y` refers to the position of the character's face in the portrait. It's used to position the speech bubble and centering the image during the popout animation in the options screen.
 - `unk1` is unknown data.
